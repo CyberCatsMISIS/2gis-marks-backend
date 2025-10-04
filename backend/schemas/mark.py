@@ -15,6 +15,7 @@ class SMarkCreate(MarkBase):
 
 
 class SMarkUpdate(MarkBase):
+    tags: list[str]
     pass
 
 

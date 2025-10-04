@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import create_tables, delete_tables
 from router.auth import router as auth_router
+from router.mark import router as mark_router
 
 from fastapi import APIRouter
 from repositories.auth import UserRepository
@@ -95,6 +96,7 @@ async def init_test_data():
     return {"message": "Тестовые данные созданы"}
 
 app.include_router(init_router)
+app.include_router(mark_router)
 
 
 

@@ -1,3 +1,4 @@
+import httpx
 from database import new_session
 from models.mark import MarkOrm
 from schemas.mark import SMarkCreate, SMarkUpdate
@@ -33,10 +34,38 @@ class MarkRepository:
 
     @classmethod
     async def create_mark(cls, mark_data: SMarkCreate) -> MarkOrm:
+        # В Docker используем имя сервиса вместо localhost
+        tag_service_url = "http://classifier:3002/parse"  # Или другое имя контейнера
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    tag_service_url,
+                    json={"text": mark_data.text},
+                    timeout=10.0
+                )
+                response.raise_for_status()
+                
+                tags_data = response.json()
+                parsed_tags = tags_data.get("tags", [])
+                
+        except httpx.RequestError as e:
+            # Если сервис недоступен, используем дефолтные теги
+            parsed_tags = mark_data.tags
+            print(f"Tag service unavailable: {e}")
+        except httpx.HTTPStatusError as e:
+            parsed_tags = mark_data.tags
+            print(f"Tag service error: {e}")
+        except Exception as e:
+            # На всякий случай ловим все остальные исключения
+            parsed_tags = mark_data.tags
+            print(f"Unexpected error: {e}")
+        
+        # Создаем метку с полученными тегами
         async with new_session() as session:
             mark = MarkOrm(
                 text=mark_data.text,
-                tags=mark_data.tags,
+                tags=parsed_tags,
                 latitude=mark_data.latitude,
                 longitude=mark_data.longitude
             )

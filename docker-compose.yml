@@ -32,6 +32,14 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+
+  classifier:
+    build: ./classifier
+    container_name: classifier
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./classifier:/app
   
 # frontend:
 #   build: ./frontend

@@ -1,4 +1,5 @@
 import uvicorn
+import asyncio
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +7,7 @@ from contextlib import asynccontextmanager
 from database import create_tables, delete_tables, new_session
 from router.auth import router as auth_router
 from router.mark import router as mark_router
+from kafka_consumer import consume_marks
 
 from fastapi import APIRouter
 from repositories.auth import UserRepository
@@ -19,16 +21,21 @@ from sqlalchemy import select
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await delete_tables()
+    print("База данных очищена")
     await create_tables()
+    print("Таблицы созданы")
     
     # Инициализация ролей
     async with new_session() as session:
         roles = [RoleOrm(role='user'), RoleOrm(role='admin')]
         session.add_all(roles)
         await session.commit()
+        
+        asyncio.create_task(consume_marks())
     
     print('База готова к работе')
     yield
+    print('Выключение')
 
 
 def custom_openapi():

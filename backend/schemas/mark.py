@@ -14,9 +14,11 @@ class SMarkCreate(MarkBase):
     pass
 
 
-class SMarkUpdate(MarkBase):
-    tags: list[str]
-    pass
+class SMarkUpdate(BaseModel):
+    text: str | None = None
+    tags: list[str] | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class SMark(MarkBase):

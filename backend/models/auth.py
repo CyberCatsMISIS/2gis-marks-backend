@@ -6,6 +6,13 @@ from database import Model
 
 
 
+class RoleOrm(Model):
+    __tablename__ = 'roles'
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    role: Mapped[str] = mapped_column(unique=True) #1 : user; 2 : admin
+
+
 class UserOrm(Model):
     __tablename__ = 'users'
     
@@ -13,6 +20,7 @@ class UserOrm(Model):
     username: Mapped[str]
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     hashed_password: Mapped[str]
+    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'), default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 

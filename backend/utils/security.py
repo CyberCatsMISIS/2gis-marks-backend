@@ -68,3 +68,14 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+
+async def get_current_admin(current_user: UserOrm = Depends(get_current_user)) -> UserOrm:
+    if current_user.role_id != 2:
+        raise HTTPException(status_code=403, detail="Недостаточно прав")
+    return current_user
+
+
+async def get_user_by_id(user_id: int) -> UserOrm | None:
+    return await UserRepository.get_user_by_id(user_id)

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from schemas.mark import SMark, SMarkCreate, SMarkUpdate
 from repositories.mark import MarkRepository
 from models.auth import UserOrm
+from utils.security import get_current_admin
 
 
 
@@ -40,8 +41,8 @@ async def create_mark(mark_data: SMarkCreate):
         raise HTTPException(status_code=400, detail=str(e))
     
     
-@router.put("/{mark_id}", response_model=SMark)
-async def update_mark(mark_id: int, mark_data: SMarkUpdate):
+@router.put("/update/{mark_id}", response_model=SMark)
+async def update_mark(mark_id: int, mark_data: SMarkUpdate, current_user: UserOrm = Depends(get_current_admin)):
     try:
         mark = await MarkRepository.update_mark(mark_id, mark_data)
         return SMark.model_validate(mark, from_attributes=True)
@@ -49,8 +50,8 @@ async def update_mark(mark_id: int, mark_data: SMarkUpdate):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/{mark_id}")
-async def delete_mark(mark_id: int):
+@router.delete("/delete/{mark_id}")
+async def delete_mark(mark_id: int, current_user: UserOrm = Depends(get_current_admin)):
     try:
         await MarkRepository.delete_mark(mark_id)
         return {"success": True, "message": f"Марка с id = {mark_id} удалена"}

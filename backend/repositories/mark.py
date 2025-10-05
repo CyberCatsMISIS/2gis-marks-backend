@@ -81,18 +81,16 @@ class MarkRepository:
         
         async with new_session() as session:
             mark = await session.merge(mark)
-            if mark_data.text is not None:
-                mark.text = mark_data.text
-            if mark_data.tags is not None:
-                mark.tags = mark_data.tags
-            if mark_data.latitude is not None:
-                mark.latitude = mark_data.latitude
-            if mark_data.longitude is not None:
-                mark.longitude = mark_data.longitude
             
+            # Обновляем только переданные поля
+            update_data = mark_data.model_dump(exclude_unset=True)
+            for field, value in update_data.items():
+                if value is not None:
+                    setattr(mark, field, value)
+                
             await session.commit()
             return mark
-    
+        
 
     @classmethod
     async def delete_mark(cls, mark_id: int):

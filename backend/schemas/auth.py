@@ -20,6 +20,12 @@ class SUser(BaseModel):
     id: int
     username: str
     email: EmailStr
+    role_id: int
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SAssignRole(BaseModel):
+    user_id: int
+    role_id: int

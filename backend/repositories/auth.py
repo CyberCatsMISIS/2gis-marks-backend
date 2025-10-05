@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from database import new_session
-from models.auth import UserOrm, RefreshTokenOrm, BlacklistedTokenOrm
+from models.auth import UserOrm, RefreshTokenOrm, BlacklistedTokenOrm, RoleOrm
 from schemas.auth import SUserRegister
 from sqlalchemy import select, delete
 from passlib.context import CryptContext
@@ -120,4 +120,25 @@ class UserRepository:
                 created_at=datetime.now(timezone.utc)
             )
             session.add(blacklisted_token)
+            await session.commit()
+    
+    
+    @classmethod
+    async def assign_user_role(cls, user_id: int, role_id: int):
+        async with new_session() as session:
+            # Получаем пользователя в текущей сессии
+            user = await session.get(UserOrm, user_id)
+            if not user:
+                raise ValueError("Пользователь не найден")
+            
+            # Проверяем существование роли
+            role = await session.get(RoleOrm, role_id)
+            if not role:
+                raise ValueError("Роль не найдена")
+            
+            # Обновляем роль
+            user.role_id = role_id
+            
+            # Отзываем все refresh токены пользователя
+            await cls.revoke_refresh_token(user_id)            
             await session.commit()

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from schemas.auth import SUserRegister, SUserLogin, SUser
+from schemas.auth import SUserRegister, SUserLogin, SUser, SAssignRole
 from repositories.auth import UserRepository
 from models.auth import UserOrm
-from utils.security import create_access_token, get_current_user, oauth2_scheme
+from utils.security import create_access_token, get_current_user, oauth2_scheme, get_current_admin
 
 
 
@@ -52,4 +52,23 @@ async def logout(token: str = Depends(oauth2_scheme), current_user: UserOrm = De
 
 @router.get("/me", response_model=SUser)
 async def get_current_user_info(current_user: UserOrm = Depends(get_current_user)):
-    return SUser.model_validate(current_user)
+    fresh_user = await UserRepository.get_user_by_id(current_user.id)
+    return SUser.model_validate(fresh_user)
+
+
+@router.post("/assign-role")
+async def assign_role(role_data: SAssignRole, current_user: UserOrm = Depends(get_current_admin)):
+    try:
+        if role_data.user_id == current_user.id and role_data.role_id != 2:
+            raise HTTPException(
+                status_code=400, 
+                detail="Вы не можете снять себе права администратора"
+            )
+        
+        await UserRepository.assign_user_role(role_data.user_id, role_data.role_id)
+        return {
+            "success": True, 
+            "message": "Роль успешно назначена. Пользователю требуется перелогин."
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
